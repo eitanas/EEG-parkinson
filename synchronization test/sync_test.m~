@@ -1,0 +1,87 @@
+%% sync test
+clear all;
+clc;
+data = importdata('WWT1_MC-P05.txt');
+data = data.data;
+
+t = data(:,1);
+c3 = data(:,5);
+c4 = data(:,18);
+
+c3_v = [c3;c3;c3;c3(1:16643)];
+c4_v = [c4;c4;c4;c4(1:16643)];
+
+%% fft
+s_fr = 256;
+
+alpha_start_fr = 7.8;
+alpha_end_fr = 15.6;
+
+N = length(c3_v);
+fft_t = 1:1:N;
+
+c3_alpha_wave = ExtractSignalwave(alpha_start_fr,alpha_end_fr,c3_v,s_fr);
+c4_alpha_wave = ExtractSignalwave(alpha_start_fr,alpha_end_fr,c4_v,s_fr);
+
+%% plotting  alpha 10-11
+
+start_sec = 10;
+end_sec = 11;
+
+start_idx = start_sec * s_fr;
+end_idx = end_sec * s_fr;
+
+c3_test_alpha_wave = c3_alpha_wave(start_idx:end_idx);
+c4_test_alpha_wave = c4_alpha_wave(start_idx:end_idx);
+
+n = length(c3_test_alpha_wave);
+t = 1:1:n;
+
+figure;
+plot(t,c3_test_alpha_wave);
+title('c3 alpha');
+
+figure;
+plot(t,c4_test_alpha_wave);
+title('c4 alpha');
+
+%% hilbert transform and phase
+c3_hilbert = hilbert(c3_test_alpha_wave);
+c4_hilbert = hilbert(c4_test_alpha_wave);
+
+
+c3_phase = angle(c3_hilbert);
+c4_phase = angle(c4_hilbert);
+
+figure;
+plot(t,c3_phase , t,c4_phase);
+grid on;
+title('c3 & c4 phase');
+
+%% delta phase
+
+delta_phi = c4_phase - c3_phase;
+plot(t,delta_phi,'o');
+grid on;
+
+%%
+
+exponent = exp(i * delta_phi);
+plot(exponent, 'o')
+
+%% average
+real_part = real(exponent);
+imaginary_part = imag(exponent);
+
+real_avg = sum(real_part) / length(real_part);
+imag_avg = sum(imaginary_part) / length(imaginary_part);
+plot(exponent, 'o')
+hold on;
+plot(real_avg , imag_avg , 'o');
+grid on;
+
+sync_rate = sqrt(real_avg^2 + imag_avg^2 )
+
+
+
+
